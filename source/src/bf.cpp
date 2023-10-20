@@ -1,53 +1,29 @@
 #include <iostream>
+#include <unordered_map>
+#include <functional>
 
 #include "bf.h"
 
-std::string compile(std::string sourceCode) {
-    std::string output = "#define MAX_CELLS 30000\n#include <iostream>\nint main() {\nsize_t cells[MAX_CELLS];\nsize_t currentCell = MAX_CELLS/2;\n";
+std::string compile(const std::string& sourceCode) {
+    std::string output = "#define MAX_CELLS 30000\n#include <iostream>\nint main() {\n    size_t cells[MAX_CELLS];\n    size_t currentCell = MAX_CELLS/2;\n";
+    size_t tab_count = 1;
 
-    for (char &character : sourceCode) {
-        switch (character) {
-            case '\n':
-            case ' ':
-            case '\t':
-                continue;
-                break;
+    std::unordered_map<char, std::function<std::string()>> commandMap = {
+        {'-', [&]() { return std::string(tab_count*4, ' ') + "--cells[currentCell];\n"; }},
+        {'+', [&]() { return std::string(tab_count*4, ' ') + "++cells[currentCell];\n"; }},
+        {'>', [&]() { return std::string(tab_count*4, ' ') + "++currentCell;\n"; }},
+        {'<', [&]() { return std::string(tab_count*4, ' ') + "--currentCell;\n"; }},
+        {'[', [&]() { return std::string((tab_count++)*4, ' ') + "while (cells[currentCell] != 0) {\n"; }},
+        {']', [&]() { tab_count--; return std::string(tab_count*4, ' ') + "}\n"; }},
+        {'.', [&]() { return std::string(tab_count*4, ' ') + "std::cout << char(cells[currentCell]);\n"; }},
+        {',', [&]() { return std::string(tab_count*4, ' ') + "std::cin >> cells[currentCell];\n"; }}
+    };
 
-            case '+':
-                output += "cells[currentCell]++;\n";
-                break;
-
-            case '-':
-                output += "cells[currentCell]--;\n";
-                break;
-            
-            case '>':
-                output += "currentCell++;\n";
-                break;
-            
-            case '<':
-                output += "currentCell--;\n";
-                break;
-            
-            case '[':
-                output += "do {\n";
-                break;
-            
-            case ']':
-                output += "}\nwhile(cells[currentCell] != 0);\n";
-                break;
-            
-            case '.':
-                output += "std::cout << char(cells[currentCell]);\n";
-                break;
-            
-            case ',':
-                output += "std::cin >> cells[currentCell];\n";
-                break;
-            
-            default:
-                std::cout << "[Warning] Skipped unknown character: " << character << std::endl;
-                break;
+    for (auto character : sourceCode) {
+        if (commandMap.count(character)) {
+            output += commandMap[character]();
+        } else if (character != '\n' && character != ' ' && character != '\t') {
+            std::cerr << "[Warning] Skipped unknown character: " << character << std::endl;
         }
     }
 

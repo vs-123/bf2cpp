@@ -1,6 +1,6 @@
 #ifndef BF_H
 #define BF_h
 
-std::string compile(std::string sourceCode);
+std::string compile(const std::string& sourceCode);
 
 #endif
