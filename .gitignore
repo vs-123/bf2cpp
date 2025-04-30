@@ -1,0 +1,5 @@
+.vscode/
+build/
+pseudo
+test.bf
+test.cpp
